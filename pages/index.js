@@ -1,6 +1,15 @@
-import Head from "next/head";
-import Image from "next/image";
+import Navbar from "../components/Navbar";
+import Hero from "../components/Hero";
+import Input from "../components/Input";
 
 export default function Home() {
-  return <div></div>;
+
+  return (
+    <>
+      <Navbar />
+      <Hero>
+        <Input />
+      </Hero>
+    </>
+  );
 }
