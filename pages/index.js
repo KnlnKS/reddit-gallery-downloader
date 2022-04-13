@@ -1,5 +1,6 @@
-import fetch from "node-fetch";
+import nodeFetch from "node-fetch";
 import cheerio from "cheerio";
+import JSZip from "jszip";
 
 import React, { useState } from "react";
 import {
@@ -18,13 +19,15 @@ import { BrandReddit } from "tabler-icons-react";
 
 import Hero from "../components/Hero";
 import Input from "../components/Input";
+import urlToPromise from "../functions/urlToPromise";
+import downloadZip from "../functions/downloadZip";
 
 export async function getServerSideProps({ query }) {
   if (!query?.galleryId) {
     return { props: { images: [] } };
   }
 
-  const resp = await fetch(
+  const resp = await nodeFetch(
     `https://www.reddit.com/gallery/${query?.galleryId}`,
     {
       headers: {
@@ -84,6 +87,7 @@ export default function Gallery({ images }) {
   images.forEach((image) => {
     initalState[image.id] = false;
   });
+  const [ordered, setOrdered] = useState(false);
   const [numSelected, setNumSelected] = useState(0);
   const [selected, setSelected] = useState(initalState);
   const { classes } = useStyles();
@@ -112,7 +116,26 @@ export default function Gallery({ images }) {
           />
           <br />
           <Center>
-            <Button color="reddit-orange" disabled={numSelected === 0}>
+            <Button
+              color="reddit-orange"
+              disabled={numSelected === 0}
+              onClick={async () => {
+                var zip = new JSZip();
+
+                for (const image of images)
+                  if (selected[image.id])
+                    zip.file(
+                      (ordered ? image.id + "_" : "") +
+                        image?.url.split("/").pop(),
+                      urlToPromise(image?.url + "?download=true"),
+                      {
+                        binary: true,
+                      }
+                    );
+
+                downloadZip(zip);
+              }}
+            >
               Download
             </Button>
             <Space w="xl" />
@@ -134,7 +157,12 @@ export default function Gallery({ images }) {
               {numSelected < images.length ? "Select All" : "Clear All"}
             </Button>
             <Space w="xl" />
-            <Switch color="reddit-orange" label="Maintain Order" />
+            <Switch
+              color="reddit-orange"
+              label="Maintain Order"
+              checked={ordered}
+              onChange={(e) => setOrdered(e.currentTarget.checked)}
+            />
           </Center>
           <br />
           <Container my="md">
