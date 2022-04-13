@@ -1,8 +1,10 @@
 import React, { useRef, useState } from "react";
+import { useRouter } from "next/router";
 import { TextInput, ActionIcon, Alert } from "@mantine/core";
 import { Link, ArrowRight, AlertCircle } from "tabler-icons-react";
 
-function Input({ callback }) {
+function Input({ reset }) {
+  const { push } = useRouter();
   const [requestFailed, setRequestFailed] = useState(false);
   const inputRef = useRef();
 
@@ -21,10 +23,19 @@ function Input({ callback }) {
               color={"reddit-orange"}
               variant={"filled"}
               onClick={async () => {
-                const url = new URL(inputRef.current.value);
-
-                if (!url.hostname.includes("reddit.com"))
+                let url;
+                try {
+                  url = new URL(inputRef.current.value);
+                } catch (e) {
                   setRequestFailed(true);
+                  return;
+                }
+
+
+                if (!url.hostname.includes("reddit.com")){
+                  setRequestFailed(true);
+                  return;
+                }
 
                 let galleryId;
                 let splitPath = url.pathname.split("/");
@@ -36,7 +47,9 @@ function Input({ callback }) {
                 }
 
                 if (galleryId) {
-                  window.open(`/${galleryId}`);
+                  reset();
+                  setRequestFailed(false);
+                  push(`?galleryId=${galleryId}`);
                 } else {
                   setRequestFailed(true);
                 }
